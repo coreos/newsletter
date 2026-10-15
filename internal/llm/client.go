@@ -40,6 +40,12 @@ func NewClient(cfg *config.Config, logger *util.Logger) (Client, error) {
 
 	if provider == "gemini" {
 		logger.Debug("Using Google Gemini provider")
+		// Check if using Vertex AI (Google Cloud)
+		if cfg.VertexProjectID != "" {
+			logger.Debug("Using Gemini via Vertex AI")
+			return NewVertexGeminiClient(cfg, logger)
+		}
+		// Use direct Gemini API
 		return NewGeminiClient(cfg, logger)
 	}
 
@@ -261,6 +267,91 @@ func (vc *VertexClaudeClient) GenerateNewsletter(ctx context.Context, prompt str
 func (vc *VertexClaudeClient) Close() error {
 	if vc.client != nil {
 		return vc.client.Close()
+	}
+	return nil
+}
+
+// ============================================================================
+// VERTEX AI GEMINI CLIENT
+// ============================================================================
+
+// VertexGeminiClient uses Gemini API via Google Cloud Vertex AI
+type VertexGeminiClient struct {
+	config *config.Config
+	logger *util.Logger
+	client *genai.Client
+}
+
+// NewVertexGeminiClient creates a Gemini client via Vertex AI
+func NewVertexGeminiClient(cfg *config.Config, logger *util.Logger) (*VertexGeminiClient, error) {
+	if cfg.VertexProjectID == "" {
+		return nil, fmt.Errorf("ANTHROPIC_VERTEX_PROJECT_ID not set")
+	}
+
+	// Create Vertex AI client (uses Application Default Credentials from: gcloud auth application-default login)
+	ctx := context.Background()
+	client, err := genai.NewClient(ctx, cfg.VertexProjectID, cfg.VertexRegion)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create Vertex AI client: %w", err)
+	}
+
+	return &VertexGeminiClient{
+		config: cfg,
+		logger: logger,
+		client: client,
+	}, nil
+}
+
+// GenerateNewsletter generates a newsletter using Gemini via Vertex AI
+func (vg *VertexGeminiClient) GenerateNewsletter(ctx context.Context, prompt string) (string, error) {
+	vg.logger.Debug("Generating newsletter with Gemini via Vertex AI")
+
+	// Ensure context is valid
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
+	// Get model name
+	modelName := vg.config.GeminiModel
+	if modelName == "" {
+		modelName = "gemini-2.5-flash"
+	}
+
+	// Create model (Vertex AI models are referenced by name)
+	model := vg.client.GenerativeModel(modelName)
+	model.SetTemperature(0.7)
+	model.SetTopP(0.9)
+	model.SetMaxOutputTokens(2000)
+
+	// Generate content
+	resp, err := model.GenerateContent(ctx, genai.Text(prompt))
+	if err != nil {
+		return "", fmt.Errorf("failed to generate content: %w", err)
+	}
+
+	// Extract text from response
+	if len(resp.Candidates) == 0 {
+		return "", fmt.Errorf("no candidates in response")
+	}
+
+	candidate := resp.Candidates[0]
+	if candidate.Content == nil || len(candidate.Content.Parts) == 0 {
+		return "", fmt.Errorf("no content in response")
+	}
+
+	// Extract text
+	if len(candidate.Content.Parts) > 0 {
+		if text, ok := candidate.Content.Parts[0].(genai.Text); ok {
+			return string(text), nil
+		}
+	}
+	return "", fmt.Errorf("no text content in response")
+}
+
+// Close closes the Vertex AI Gemini client
+func (vg *VertexGeminiClient) Close() error {
+	if vg.client != nil {
+		return vg.client.Close()
 	}
 	return nil
 }

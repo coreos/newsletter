@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -191,18 +192,38 @@ func runValidate() error {
 
 	// Check LLM Provider
 	fmt.Print("LLM Provider: ")
-	if cfg.GoogleAPIKey != "" {
-		fmt.Println("✓ Gemini configured")
-	} else if cfg.AnthropicAPIKey != "" {
-		fmt.Println("✓ Claude configured (direct API)")
-	} else if cfg.VertexProjectID != "" {
-		fmt.Println("✓ Claude configured (Vertex AI)")
+	provider := strings.ToLower(cfg.LLMProvider)
+	
+	if provider == "gemini" {
+		if cfg.VertexProjectID != "" {
+			fmt.Println("✓ Gemini configured (Vertex AI)")
+		} else if cfg.GoogleAPIKey != "" {
+			fmt.Println("✓ Gemini configured (direct API)")
+		} else {
+			fmt.Println("✗ Gemini selected but not configured (set ANTHROPIC_VERTEX_PROJECT_ID or GOOGLE_API_KEY)")
+		}
+	} else if provider == "claude" {
+		if cfg.VertexProjectID != "" {
+			fmt.Println("✓ Claude configured (Vertex AI)")
+		} else if cfg.AnthropicAPIKey != "" {
+			fmt.Println("✓ Claude configured (direct API)")
+		} else {
+			fmt.Println("✗ Claude selected but not configured (set ANTHROPIC_VERTEX_PROJECT_ID or ANTHROPIC_API_KEY)")
+		}
 	} else {
-		fmt.Println("✗ No provider configured")
-		fmt.Println("   Set one of:")
-		fmt.Println("   - GOOGLE_API_KEY (for Gemini)")
-		fmt.Println("   - ANTHROPIC_API_KEY (for Claude direct)")
-		fmt.Println("   - ANTHROPIC_VERTEX_PROJECT_ID (for Claude via Vertex AI)")
+		if cfg.GoogleAPIKey != "" {
+			fmt.Println("✓ Gemini configured")
+		} else if cfg.AnthropicAPIKey != "" {
+			fmt.Println("✓ Claude configured (direct API)")
+		} else if cfg.VertexProjectID != "" {
+			fmt.Println("✓ Vertex AI configured")
+		} else {
+			fmt.Println("✗ No provider configured")
+			fmt.Println("   Set LLM_PROVIDER=claude or LLM_PROVIDER=gemini, then:")
+			fmt.Println("   - For Vertex AI: set ANTHROPIC_VERTEX_PROJECT_ID and CLOUD_ML_REGION")
+			fmt.Println("   - For Gemini direct: set GOOGLE_API_KEY")
+			fmt.Println("   - For Claude direct: set ANTHROPIC_API_KEY")
+		}
 	}
 
 	fmt.Println("\n✓ Configuration validation complete")
