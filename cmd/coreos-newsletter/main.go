@@ -194,9 +194,15 @@ func runValidate() error {
 	if cfg.GoogleAPIKey != "" {
 		fmt.Println("✓ Gemini configured")
 	} else if cfg.AnthropicAPIKey != "" {
-		fmt.Println("✓ Claude configured")
+		fmt.Println("✓ Claude configured (direct API)")
+	} else if cfg.VertexProjectID != "" {
+		fmt.Println("✓ Claude configured (Vertex AI)")
 	} else {
-		fmt.Println("✗ No provider configured (set GOOGLE_API_KEY or ANTHROPIC_API_KEY)")
+		fmt.Println("✗ No provider configured")
+		fmt.Println("   Set one of:")
+		fmt.Println("   - GOOGLE_API_KEY (for Gemini)")
+		fmt.Println("   - ANTHROPIC_API_KEY (for Claude direct)")
+		fmt.Println("   - ANTHROPIC_VERTEX_PROJECT_ID (for Claude via Vertex AI)")
 	}
 
 	fmt.Println("\n✓ Configuration validation complete")

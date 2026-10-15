@@ -23,9 +23,13 @@ type Config struct {
 	GoogleCloudLocation string
 	GeminiModel         string
 
-	// Claude
+	// Claude (Anthropic)
 	AnthropicAPIKey string
 	ClaudeModel     string
+
+	// Claude via Vertex AI (Google Cloud)
+	VertexProjectID string
+	VertexRegion    string
 }
 
 // Load reads configuration from .env file and environment variables
@@ -51,6 +55,10 @@ func Load() (*Config, error) {
 		// Claude
 		AnthropicAPIKey: os.Getenv("ANTHROPIC_API_KEY"),
 		ClaudeModel:     getEnvOrDefault("CLAUDE_MODEL", "claude-sonnet-4-20250514"),
+
+		// Claude via Vertex AI
+		VertexProjectID: os.Getenv("ANTHROPIC_VERTEX_PROJECT_ID"),
+		VertexRegion:    getEnvOrDefault("CLOUD_ML_REGION", "us-central1"),
 	}
 
 	return cfg, nil
