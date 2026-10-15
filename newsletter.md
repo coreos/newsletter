@@ -1,27 +1,37 @@
-## Fedora CoreOS Weekly Newsletter
+# Fedora CoreOS Weekly Newsletter
 
-**Week of 2026-10-08 to 2026-10-15**
+**Week of October 8 - October 15, 2026**
 
-Hello Fedora CoreOS Community,
+Welcome to the Fedora CoreOS weekly newsletter! We extend our gratitude to everyone who contributes to the project, whether through code, documentation, testing, or community discussions. Your involvement is vital to our continued progress.
 
-We extend our sincere appreciation to everyone who contributes to Fedora CoreOS, whether through code, documentation, discussions, or testing. Your dedication is what makes this project thrive.
+## Highlights
 
-This past week was a quieter period for direct contributions in terms of new pull requests and scheduled community meetings.
+This past week, there were no new pull requests merged. Even without direct code contributions, community engagement and planning remain active and crucial.
 
-### Activity Summary
+### Community Meeting Summary
 
-*   **Pull Requests**: 0 total
-*   **Community Meetings**: 0
+The Fedora CoreOS community held its weekly meeting on **October 14, 2026**.
 
-Even during quieter weeks, important background work, planning, and asynchronous discussions continue to shape the future of Fedora CoreOS. We recognize and value all the foundational efforts that occur, even when not immediately visible in public repositories or meeting notes.
+*   **Meeting Log:** [View Meeting Log](https://meetbot.fedoraproject.org/fedora-coreos/2026-10-14/fedora-coreos-meeting.html)
+*   **Attendees:** 9 participants joined the discussion.
 
-### Get Involved
+**Key Discussions & Decisions:**
+The meeting covered a review of the Fedora 45 Release Schedule, with a key decision made regarding the final freeze. It was decided that the Fedora 45 release final freeze will occur with an early target date of October 20, 2026. Another significant topic was the migration of the Newsletter repository, which was voted on and passed, to move it to the CoreOS GitHub organization.
 
-We encourage you to join the conversation and contribute to Fedora CoreOS. Your input is always welcome!
+**Action Items & Contributors:**
+*   **Yasmin Valim de Souza (ydesouza)** will proceed with migrating the newsletter repository to the CoreOS organization.
+*   **Cade Jacobson (cadejacobson)** will open a pull request with unit tests for Ignition's Azure logic to document its current behavior.
 
-*   **Chat with us**: Join the `#fedora-coreos` channel on Libera.Chat IRC or Matrix (bridged)
-*   **Mailing List**: Subscribe to the `coreos@lists.fedoraproject.org` mailing list for broader discussions.
-*   **Issue Tracker**: Report bugs or suggest features on our issue tracker.
-*   **Documentation**: Help improve our documentation.
+## Get Involved
 
-Thank you for being a part of the Fedora CoreOS community. We look forward to more updates and interactions in the coming weeks.
+Your contributions are always welcome! Whether you're interested in contributing code, documentation, testing, or participating in discussions, there are many ways to help.
+
+*   Join our community meetings.
+*   Engage with us on our mailing lists or chat channels.
+*   Check out our issue trackers for ways to contribute.
+
+For more details on how to participate, please visit the Fedora CoreOS project page.
+
+Thank you for being a part of the Fedora CoreOS community!
+
+The Fedora CoreOS Team

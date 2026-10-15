@@ -71,17 +71,23 @@ This newsletter highlights contributions and activities. The tone should be calm
 	// Meetings summary
 	if meetings, ok := payload["meetings"].([]map[string]interface{}); ok {
 		if len(meetings) > 0 {
-			builder.WriteString("### Meetings\n\n")
+			builder.WriteString("### Community Meetings\n\n")
 			for _, meeting := range meetings {
 				date, _ := meeting["date"].(string)
 				url, _ := meeting["url"].(string)
 				topics, _ := meeting["topics"].([]string)
 				decisions, _ := meeting["decisions"].([]string)
+				actions, _ := meeting["actions"].([]string)
+				attendees, _ := meeting["attendees"].([]string)
 
-				builder.WriteString(fmt.Sprintf("**%s** - [Meeting Log](%s)\n\n", date, url))
+				builder.WriteString(fmt.Sprintf("**Meeting on %s** ([View Meeting Log](%s))\n\n", date, url))
+
+				if len(attendees) > 0 {
+					builder.WriteString(fmt.Sprintf("Attendees: %d participants\n\n", len(attendees)))
+				}
 
 				if len(topics) > 0 {
-					builder.WriteString("Topics discussed:\n")
+					builder.WriteString("**Topics Discussed:**\n")
 					for _, topic := range topics {
 						builder.WriteString(fmt.Sprintf("- %s\n", topic))
 					}
@@ -89,9 +95,17 @@ This newsletter highlights contributions and activities. The tone should be calm
 				}
 
 				if len(decisions) > 0 {
-					builder.WriteString("Decisions made:\n")
+					builder.WriteString("**Key Decisions:**\n")
 					for _, decision := range decisions {
 						builder.WriteString(fmt.Sprintf("- %s\n", decision))
+					}
+					builder.WriteString("\n")
+				}
+
+				if len(actions) > 0 {
+					builder.WriteString("**Action Items:**\n")
+					for _, action := range actions {
+						builder.WriteString(fmt.Sprintf("- %s\n", action))
 					}
 					builder.WriteString("\n")
 				}
