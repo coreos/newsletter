@@ -1,10 +1,10 @@
 package collectors
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
-	"regexp"
 	"strings"
 	"time"
 
@@ -16,6 +16,8 @@ import (
 const (
 	meetbotTimeout = 30 * time.Second
 	meetbotBase    = "https://meetbot.fedoraproject.org"
+	meetbotCalAPI  = meetbotBase + "/cal/events"
+	meetbotFragAPI = meetbotBase + "/fragedpt/"
 )
 
 // MeetbotCollector fetches Fedora CoreOS meeting logs
@@ -39,134 +41,190 @@ func (mc *MeetbotCollector) FetchFedoraCoreOSMeetings(windowStart, windowEnd tim
 	var meetings []models.MeetingRecord
 	var warnings []string
 
-	// Fetch the main meetbot page which loads meetings dynamically
-	// We'll extract meeting info from the HTML content
-	html, err := mc.fetchMeetbotPage()
+	// Try to fetch meetings via the calendar API endpoint
+	// This is the official Mote API for fetching events by period
+	calMeetings, err := mc.fetchViaCalendarAPI(windowStart, windowEnd)
 	if err != nil {
-		warnings = append(warnings, fmt.Sprintf("Meetbot fetch failed: %v", err))
-		return meetings, warnings
+		warnings = append(warnings, fmt.Sprintf("Calendar API failed: %v", err))
+		// Fall back to trying the fragedpt API
+		fragMeetings, fragWarnings := mc.fetchViaFragedptAPI(windowStart, windowEnd)
+		warnings = append(warnings, fragWarnings...)
+		return fragMeetings, warnings
 	}
 
-	// Parse the Fedora CoreOS meeting info from the page
-	// The page contains AI-generated summaries with meeting details
-	meetings, parseWarnings := mc.extractMeetingsFromPage(html, windowStart, windowEnd)
-	warnings = append(warnings, parseWarnings...)
+	meetings = append(meetings, calMeetings...)
+
+	if len(meetings) == 0 {
+		warnings = append(warnings, "No meetings found in time window")
+	}
 
 	return meetings, warnings
 }
 
-// fetchMeetbotPage fetches the main meetbot page
-func (mc *MeetbotCollector) fetchMeetbotPage() (string, error) {
-	req, _ := http.NewRequest("GET", meetbotBase, nil)
-	req.Header.Set("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36")
-	
+// fetchViaCalendarAPI fetches meetings using the /cal/events endpoint
+// This is the official calendar API that returns JSON
+func (mc *MeetbotCollector) fetchViaCalendarAPI(windowStart, windowEnd time.Time) ([]models.MeetingRecord, error) {
+	var meetings []models.MeetingRecord
+
+	// Format dates for the API (ISO 8601 format)
+	startStr := windowStart.Format("2006-01-02T15:04:05")
+	endStr := windowEnd.Format("2006-01-02T15:04:05")
+
+	// Build URL
+	url := fmt.Sprintf("%s?start=%s&end=%s", meetbotCalAPI, startStr, endStr)
+
+	req, _ := http.NewRequest("GET", url, nil)
+	req.Header.Set("User-Agent", "Fedora CoreOS Newsletter Generator")
+
 	resp, err := mc.client.Do(req)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("HTTP %d", resp.StatusCode)
+		return nil, fmt.Errorf("HTTP %d", resp.StatusCode)
 	}
 
+	// Parse JSON response
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return string(body), nil
-}
+	var events []map[string]interface{}
+	err = json.Unmarshal(body, &events)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse JSON: %w", err)
+	}
 
-// extractMeetingsFromPage extracts meeting info from the meetbot HTML page
-func (mc *MeetbotCollector) extractMeetingsFromPage(html string, windowStart, windowEnd time.Time) ([]models.MeetingRecord, []string) {
-	var meetings []models.MeetingRecord
-	var warnings []string
-
-	// Look for fedora coreos meeting sections in the HTML
-	// Pattern: fedora coreos meeting 11 people | 5 topics
-	pattern := regexp.MustCompile(`fedora\s+coreos\s+meeting\s+(\d+)\s+people\s*\|\s*(\d+)\s+topics`)
-	
-	matchesFound := pattern.FindAllStringSubmatch(html, -1)
-	if len(matchesFound) > 0 {
-		// Found at least one meeting mention
-		// Extract summary sections that follow
-		summaryPattern := regexp.MustCompile(`Key Discussion Points.*?(?:Action Items|$)`)
-		
-		if summaryMatch := summaryPattern.FindString(html); summaryMatch != "" {
-			// Parse the summary to extract key points
-			meeting := mc.parseMeetingSummary(summaryMatch, html)
-			
-			// Only include if it's in our time window
-			if meeting.Date.After(windowStart.Add(-24*time.Hour)) && meeting.Date.Before(windowEnd.Add(24*time.Hour)) {
-				meetings = append(meetings, meeting)
-			}
+	// Convert events to MeetingRecords, filtering for fedora-coreos
+	for _, event := range events {
+		meeting := mc.parseCalendarEvent(event)
+		if strings.Contains(strings.ToLower(meeting.Title), "fedora") && 
+		   strings.Contains(strings.ToLower(meeting.Title), "coreos") {
+			meetings = append(meetings, meeting)
 		}
 	}
 
-	// If no meetings found, check for the "No meetings" indication in our time window
-	if len(meetings) == 0 && !strings.Contains(html, "no community meetings") {
-		// Meetings might exist but we couldn't parse them
-		warnings = append(warnings, "Could not extract meeting details from meetbot page")
-	}
-
-	return meetings, warnings
+	return meetings, nil
 }
 
-// parseMeetingSummary parses a meeting summary from the HTML
-func (mc *MeetbotCollector) parseMeetingSummary(summary string, fullHTML string) models.MeetingRecord {
+// parseCalendarEvent converts a calendar event JSON to MeetingRecord
+func (mc *MeetbotCollector) parseCalendarEvent(event map[string]interface{}) models.MeetingRecord {
 	meeting := models.MeetingRecord{
 		Title: "Fedora CoreOS Meeting",
 		Date:  time.Now(),
 		URL:   meetbotBase,
 	}
 
-	// Extract topics from "roll call", "Action items from last meeting", "Review", "Migrate", "Open Floor" etc
-	topicsPattern := regexp.MustCompile(`<li[^>]*>([^<]+)</li>`)
-	for _, match := range topicsPattern.FindAllStringSubmatch(summary, -1) {
-		topic := strings.TrimSpace(match[1])
-		if topic != "" && len(topic) > 2 && !strings.HasPrefix(topic, "role:") {
-			meeting.Topics = append(meeting.Topics, topic)
-		}
+	// Parse title
+	if title, ok := event["title"].(string); ok {
+		meeting.Title = title
 	}
 
-	// Extract key discussion points
-	discussionPattern := regexp.MustCompile(`<li[^>]*>([^<]+?The team[^<]*)</li>`)
-	for _, match := range discussionPattern.FindAllStringSubmatch(summary, -1) {
-		point := strings.TrimSpace(match[1])
-		if point != "" {
-			meeting.Topics = append(meeting.Topics, point)
-		}
-	}
-
-	// Extract attendees from "People present" section
-	peopleSectionPattern := regexp.MustCompile(`People present.*?(?:Topics covered|$)`)
-	if peopleMatch := peopleSectionPattern.FindString(summary); peopleMatch != "" {
-		attendeePattern := regexp.MustCompile(`@([^:]+):`)
-		for _, attendeeMatch := range attendeePattern.FindAllStringSubmatch(peopleMatch, -1) {
-			attendee := strings.TrimSpace(attendeeMatch[1])
-			if attendee != "" {
-				meeting.Attendees = append(meeting.Attendees, attendee)
-			}
-		}
-	}
-
-	// Extract action items
-	actionSectionPattern := regexp.MustCompile(`Action Items.*?(?:Lookup discussions|$)`)
-	if actionMatch := actionSectionPattern.FindString(summary); actionMatch != "" {
-		actionPattern := regexp.MustCompile(`<li[^>]*>([^<]+?:.*?)</li>`)
-		for _, actionMMatch := range actionPattern.FindAllStringSubmatch(actionMatch, -1) {
-			action := strings.TrimSpace(actionMMatch[1])
-			if action != "" && !strings.HasPrefix(action, "role:") {
-				meeting.ActionItems = append(meeting.ActionItems, action)
-			}
+	// Parse start date
+	if start, ok := event["start"].(string); ok {
+		if t, err := time.Parse(time.RFC3339, start); err == nil {
+			meeting.Date = t
 		}
 	}
 
 	meeting.Raw = map[string]interface{}{
 		"url":     meetbotBase,
 		"fetched": time.Now(),
+		"event":   event,
 	}
 
 	return meeting
+}
+
+// fetchViaFragedptAPI fetches meetings using the /fragedpt/ endpoint
+// This is a fallback API for fetching meetings by channel and date
+func (mc *MeetbotCollector) fetchViaFragedptAPI(windowStart, windowEnd time.Time) ([]models.MeetingRecord, []string) {
+	var meetings []models.MeetingRecord
+	var warnings []string
+
+	// Try to list meetings for fedora-coreos channel
+	current := windowStart
+	for current.Before(windowEnd) || current.Equal(windowEnd) {
+		dateStr := current.Format("2006-01-02")
+
+		// Fetch meetings for this date
+		url := fmt.Sprintf("%s?rqstdata=listmeet&channame=fedora-coreos&datename=%s", meetbotFragAPI, dateStr)
+
+		req, _ := http.NewRequest("GET", url, nil)
+		req.Header.Set("User-Agent", "Fedora CoreOS Newsletter Generator")
+
+		resp, err := mc.client.Do(req)
+		if err != nil {
+			current = current.AddDate(0, 0, 1)
+			continue
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			resp.Body.Close()
+			current = current.AddDate(0, 0, 1)
+			continue
+		}
+
+		body, err := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		if err != nil {
+			current = current.AddDate(0, 0, 1)
+			continue
+		}
+
+		// Parse meetings list
+		var meetingsList []map[string]interface{}
+		err = json.Unmarshal(body, &meetingsList)
+		if err != nil {
+			current = current.AddDate(0, 0, 1)
+			continue
+		}
+
+		// Convert each meeting
+		for _, m := range meetingsList {
+			meeting := mc.parseFragedptMeeting(m, dateStr)
+			meetings = append(meetings, meeting)
+		}
+
+		current = current.AddDate(0, 0, 1)
+	}
+
+	return meetings, warnings
+}
+
+// parseFragedptMeeting converts a fragedpt meeting JSON to MeetingRecord
+func (mc *MeetbotCollector) parseFragedptMeeting(meeting map[string]interface{}, dateStr string) models.MeetingRecord {
+	record := models.MeetingRecord{
+		Title: "Fedora CoreOS Meeting",
+		Date:  time.Now(),
+		URL:   meetbotBase,
+	}
+
+	// Parse date
+	if t, err := time.Parse("2006-01-02", dateStr); err == nil {
+		record.Date = t
+	}
+
+	// Parse topic
+	if topic, ok := meeting["topic"].(string); ok {
+		record.Title = topic
+	}
+
+	// Parse URL
+	if urls, ok := meeting["url"].(map[string]interface{}); ok {
+		if summary, ok := urls["summary"].(string); ok {
+			record.URL = meetbotBase + summary
+		}
+	}
+
+	record.Raw = map[string]interface{}{
+		"url":     meetbotBase,
+		"fetched": time.Now(),
+		"meeting": meeting,
+	}
+
+	return record
 }

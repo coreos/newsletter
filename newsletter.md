@@ -1,27 +1,27 @@
 ## Fedora CoreOS Weekly Newsletter
 
-**Week of October 8th - October 15th, 2026**
+**Week of 2026-10-08 to 2026-10-15**
 
 Hello Fedora CoreOS Community,
 
-We appreciate your continued engagement and contributions to the project. Your involvement helps shape Fedora CoreOS, and we are grateful for your dedication.
+We extend our sincere appreciation to everyone who contributes to Fedora CoreOS, whether through code, documentation, discussions, or testing. Your dedication is what makes this project thrive.
 
-### Highlights
+This past week was a quieter period for direct contributions in terms of new pull requests and scheduled community meetings.
 
-This week, we observed the following activities:
-*   There were no new pull requests merged into the project repositories.
-*   No community meetings were held during this period.
+### Activity Summary
 
-Even in quieter weeks, the ongoing work, discussions, and planning behind the scenes are vital. Thank you to everyone who continues to contribute in various ways, from testing to documentation, and participation in discussions.
+*   **Pull Requests**: 0 total
+*   **Community Meetings**: 0
+
+Even during quieter weeks, important background work, planning, and asynchronous discussions continue to shape the future of Fedora CoreOS. We recognize and value all the foundational efforts that occur, even when not immediately visible in public repositories or meeting notes.
 
 ### Get Involved
 
-Your input is always welcome! If you're interested in contributing or have questions, here are some ways to connect:
+We encourage you to join the conversation and contribute to Fedora CoreOS. Your input is always welcome!
 
-*   **Forum:** [https://discussion.fedoraproject.org/tag/coreos](https://discussion.fedoraproject.org/tag/coreos)
-*   **Mailing List:** [https://lists.fedoraproject.org/archives/list/coreos@lists.fedoraproject.org/](https://lists.fedoraproject.org/archives/list/coreos@lists.fedoraproject.org/)
-*   **Chat:** `#fedora-coreos` on Libera.Chat
+*   **Chat with us**: Join the `#fedora-coreos` channel on Libera.Chat IRC or Matrix (bridged)
+*   **Mailing List**: Subscribe to the `coreos@lists.fedoraproject.org` mailing list for broader discussions.
+*   **Issue Tracker**: Report bugs or suggest features on our issue tracker.
+*   **Documentation**: Help improve our documentation.
 
-Thank you for being a part of the Fedora CoreOS community!
-
-The Fedora CoreOS Team
+Thank you for being a part of the Fedora CoreOS community. We look forward to more updates and interactions in the coming weeks.
