@@ -1,70 +1,45 @@
-# Fedora CoreOS Newsletter - October 2nd to October 16th, 2026
+## Fedora CoreOS Weekly Newsletter - 2026-10-16
 
-Welcome to the latest Fedora CoreOS newsletter! We are incredibly grateful for the dedication and hard work of our community members. Your contributions are vital to the continuous improvement and success of Fedora CoreOS.
+Hello Fedora CoreOS Community,
 
-This past fortnight, our community has been busy, with a total of **44 pull requests** merged and **2 community meetings** held. Thank you to everyone who contributed code, reviewed changes, reported issues, and participated in discussions.
+Welcome to our weekly newsletter, summarizing the activities and contributions from October 9th to October 16th, 2026. We appreciate everyone who participated and contributed this past week, whether through discussions, planning, or preparing for future work.
 
----
+### Highlights
 
-## Notable Contributions
+This week saw important planning and decision-making within our community.
 
-Here are some of the key updates and improvements landed in our repositories:
+**Notable Contributions**
 
-*   **ci: re-enable `go fix` for go 1.26 pipeline** ([PR #2346](https://github.com/coreos/ignition/pull/2346)) by @cadejacobson
-    *   This change re-enables `go fix` in the CI pipeline for Go 1.26, ensuring code style and compatibility are maintained.
-*   **kola: add KubeVirt platform support** ([PR #4507](https://github.com/coreos/coreos-assembler/pull/4507)) by @qinqon
-    *   Significant progress has been made with the addition of KubeVirt platform support to Kola, expanding our testing capabilities.
-*   **internal/partitioners: add sfdisk partitioning backend** ([PR #2337](https://github.com/coreos/ignition/pull/2337)) by @prestist
-    *   A new `sfdisk` partitioning backend has been introduced, enhancing Ignition's flexibility in disk management.
-*   **butane: Add THREAT_MODEL.md** ([PR #2340](https://github.com/coreos/ignition/pull/2340)) by @PeaceRebel
-    *   A threat model document has been added to Butane, improving security understanding and planning.
-*   **azure: add unittests for OVF logic** ([PR #2345](https://github.com/coreos/ignition/pull/2345)) by @cadejacobson
-    *   New unit tests have been added for OVF logic within Azure, bolstering reliability and stability.
+While there were no new pull requests merged this week, the community was active in strategic discussions that will shape future development.
 
----
+**Community Meetings**
 
-## Thanks to Our Contributors!
+The community held one meeting this week, which was well-attended by 9 participants.
 
-We extend our sincere thanks to all the individuals who contributed to Fedora CoreOS over the past two weeks:
+**Meeting on 2026-10-14** ([View Meeting Log](https://meetbot.fedoraproject.org/fedora-coreos/2026-10-14/fedora-coreos-meeting.html))
 
-*   @Ar-maan05
-*   @PeaceRebel
-*   @RiRa12621
-*   @Rolv-Apneseth
-*   @alexlarsson
-*   @bwqr
-*   @c4rt0
-*   @cadejacobson
-*   @cverna
-*   @deepak0x
-*   @jbtrystram
-*   @nikita-dubrovskii
-*   @prestist
-*   @qinqon
-*   @ravanelli
-*   @w453y
+**Topics Discussed:**
 
----
+*   **Review of Fedora 45 Release Schedule**: The team reviewed the upcoming Fedora 45 release schedule, noting an early target date of October 20th for the final freeze.
+*   **Newsletter Repository Migration**: A significant topic was the proposal to migrate the newsletter repository to the CoreOS GitHub organization, aiming to enhance project consolidation.
+*   **Other Discussions**: The meeting also covered action items from the previous meeting and provided an open floor for general topics.
 
-## Community Meetings
+**Key Decisions:**
 
-We held two productive community meetings during this period. For detailed discussions and outcomes from these sessions, please refer to the meeting logs:
+*   The vote to migrate the newsletter repository to the CoreOS GitHub organization passed.
+*   The Fedora 45 release final freeze is targeted for October 20th.
 
-*   **Meeting on 2026-10-16:** [View Meeting Log](https://meetbot.fedoraproject.org)
-*   **Meeting on 2026-10-16:** [View Meeting Log](https://meetbot.fedoraproject.org)
+**Action Items:**
 
----
+*   **Yasmin Valim de Souza (ydesouza)** will proceed with migrating the newsletter repository to the CoreOS organization.
+*   **Cade Jacobson (cadejacobson)** will open a pull request to add unit tests for Ignition's Azure logic, documenting its current behavior.
 
-## Get Involved!
+### Get Involved
 
-Your participation makes Fedora CoreOS better. We invite you to join our community and contribute!
+Your contributions are always welcome! Here are some ways to get involved:
 
-*   **Website:** [coreos.fedoraproject.org](https://coreos.fedoraproject.org)
-*   **GitHub:** [github.com/coreos](https://github.com/coreos)
-*   **Mailing List:** [coreos@lists.fedoraproject.org](mailto:coreos@lists.fedoraproject.org)
-*   **Matrix Chat:** [#fedora-coreos:fedoraproject.org](https://matrix.to/#/#fedora-coreos:fedoraproject.org)
-*   **Report an Issue:** [github.com/coreos/fedora-coreos-tracker/issues](https://github.com/coreos/fedora-coreos-tracker/issues)
+*   **Join our next community meeting**: Check the Fedora CoreOS calendar for upcoming dates and times.
+*   **Contribute code**: Find issues to work on in our GitHub repositories.
+*   **Engage in discussions**: Participate on our mailing lists or chat channels.
 
----
-
-Thank you for being a part of the Fedora CoreOS community. We look forward to another productive week!
+Thank you for being a part of the Fedora CoreOS community. We look forward to another productive week ahead!

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -161,9 +162,12 @@ func runGenerate() error {
 	}
 	defer llmClient.Close()
 
-	// Create prompt and generate
+	// Create prompt and generate with proper context
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+
 	prompt := llm.NewsletterPrompt(payload)
-	newsletter, err := llmClient.GenerateNewsletter(nil, prompt)
+	newsletter, err := llmClient.GenerateNewsletter(ctx, prompt)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to generate newsletter: %v", err))
 		return err
