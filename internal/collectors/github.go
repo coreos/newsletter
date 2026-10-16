@@ -13,7 +13,6 @@ import (
 
 const (
 	githubAPIBase = "https://api.github.com"
-	githubTimeout = 30 * time.Second
 )
 
 // GitHubCollector fetches PRs from GitHub repositories
@@ -28,7 +27,7 @@ func NewGitHubCollector(cfg *config.Config, logger *util.Logger) *GitHubCollecto
 	return &GitHubCollector{
 		config: cfg,
 		logger: logger,
-		client: &http.Client{Timeout: githubTimeout},
+		client: &http.Client{Timeout: config.GitHubAPITimeout},
 	}
 }
 
@@ -67,13 +66,17 @@ func (gc *GitHubCollector) fetchOneRepo(owner, repo string, windowStart, windowE
 	url := fmt.Sprintf("%s/repos/%s/%s/pulls", githubAPIBase, owner, repo)
 
 	// Fetch PR list
-	req, _ := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		warnings = append(warnings, fmt.Sprintf("GitHub repo %s/%s: failed to create request: %v", owner, repo, err))
+		return prs, warnings
+	}
 	gc.addHeaders(req)
 	q := req.URL.Query()
 	q.Add("state", "all")
 	q.Add("sort", "updated")
 	q.Add("direction", "desc")
-	q.Add("per_page", "100")
+	q.Add("per_page", fmt.Sprintf("%d", config.GitHubAPIPerPage))
 	req.URL.RawQuery = q.Encode()
 
 	resp, err := gc.client.Do(req)
@@ -90,7 +93,7 @@ func (gc *GitHubCollector) fetchOneRepo(owner, repo string, windowStart, windowE
 
 	var items []map[string]interface{}
 	if err := json.NewDecoder(resp.Body).Decode(&items); err != nil {
-		warnings = append(warnings, fmt.Sprintf("GitHub repo %s/%s: decode error", owner, repo))
+		warnings = append(warnings, fmt.Sprintf("GitHub repo %s/%s: decode error: %v", owner, repo, err))
 		return prs, warnings
 	}
 

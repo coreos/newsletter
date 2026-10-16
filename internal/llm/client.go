@@ -116,6 +116,9 @@ func (cc *ClaudeClient) GenerateNewsletter(ctx context.Context, prompt string) (
 		return "", fmt.Errorf("ANTHROPIC_API_KEY not set")
 	}
 
+	// Log model being used
+	cc.logger.Debug(fmt.Sprintf("Using Claude model: %s", cc.config.ClaudeModel))
+
 	// Prepare request
 	req := ClaudeRequest{
 		Model: cc.config.ClaudeModel,
@@ -219,18 +222,20 @@ func NewVertexClaudeClient(cfg *config.Config, logger *util.Logger) (*VertexClau
 
 // GenerateNewsletter generates a newsletter using Claude via Vertex AI
 func (vc *VertexClaudeClient) GenerateNewsletter(ctx context.Context, prompt string) (string, error) {
-	vc.logger.Debug("Generating newsletter with Claude via Vertex AI")
-
-	// Ensure context is valid
 	if ctx == nil {
-		ctx = context.Background()
+		return "", fmt.Errorf("context is required for GenerateNewsletter")
 	}
+	vc.logger.Debug("Generating newsletter with Claude via Vertex AI")
 
 	// Get model name
 	modelName := vc.config.ClaudeModel
 	if modelName == "" {
-		modelName = "claude-sonnet-4-20250514"
+		modelName = config.DefaultClaudeModel
 	}
+
+	// Log model and project being used
+	vc.logger.Debug(fmt.Sprintf("Using Claude model: %s in project: %s region: %s", 
+		modelName, vc.config.VertexProjectID, vc.config.VertexRegion))
 
 	// Create model (Vertex AI models are referenced with "publishers/google/models/..." prefix)
 	model := vc.client.GenerativeModel(modelName)
@@ -304,18 +309,20 @@ func NewVertexGeminiClient(cfg *config.Config, logger *util.Logger) (*VertexGemi
 
 // GenerateNewsletter generates a newsletter using Gemini via Vertex AI
 func (vg *VertexGeminiClient) GenerateNewsletter(ctx context.Context, prompt string) (string, error) {
-	vg.logger.Debug("Generating newsletter with Gemini via Vertex AI")
-
-	// Ensure context is valid
 	if ctx == nil {
-		ctx = context.Background()
+		return "", fmt.Errorf("context is required for GenerateNewsletter")
 	}
+	vg.logger.Debug("Generating newsletter with Gemini via Vertex AI")
 
 	// Get model name
 	modelName := vg.config.GeminiModel
 	if modelName == "" {
-		modelName = "gemini-2.5-flash"
+		modelName = config.DefaultGeminiModel
 	}
+
+	// Log model and project being used
+	vg.logger.Debug(fmt.Sprintf("Using Gemini model: %s in project: %s region: %s", 
+		modelName, vg.config.VertexProjectID, vg.config.VertexRegion))
 
 	// Create model (Vertex AI models are referenced by name)
 	model := vg.client.GenerativeModel(modelName)
@@ -429,8 +436,11 @@ func (gc *GeminiClient) GenerateNewsletter(ctx context.Context, prompt string) (
 	// Get model name (default to gemini-2.5-flash if not specified)
 	modelName := gc.config.GeminiModel
 	if modelName == "" {
-		modelName = "gemini-2.5-flash"
+		modelName = config.DefaultGeminiModel
 	}
+
+	// Log model being used
+	gc.logger.Debug(fmt.Sprintf("Using Gemini model: %s", modelName))
 
 	// Prepare request
 	req := GeminiRequest{

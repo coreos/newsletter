@@ -2,6 +2,7 @@ package config
 
 import (
 	"os"
+	"regexp"
 	"strings"
 
 	"github.com/joho/godotenv"
@@ -44,35 +45,39 @@ func Load() (*Config, error) {
 		GitHubRepo:  os.Getenv("GITHUB_REPO"),
 
 		// LLM
-		LLMProvider: strings.ToLower(getEnvOrDefault("LLM_PROVIDER", "gemini")),
+		LLMProvider: strings.ToLower(getEnvOrDefault("LLM_PROVIDER", DefaultLLMProvider)),
 
 		// Gemini
 		GoogleAPIKey:        os.Getenv("GOOGLE_API_KEY"),
 		GoogleCloudProject:  os.Getenv("GOOGLE_CLOUD_PROJECT"),
-		GoogleCloudLocation: getEnvOrDefault("GOOGLE_CLOUD_LOCATION", "us-central1"),
-		GeminiModel:         getEnvOrDefault("GEMINI_MODEL", "gemini-2.5-flash"),
+		GoogleCloudLocation: getEnvOrDefault("GOOGLE_CLOUD_LOCATION", DefaultGoogleCloudLocation),
+		GeminiModel:         getEnvOrDefault("GEMINI_MODEL", DefaultGeminiModel),
 
 		// Claude
 		AnthropicAPIKey: os.Getenv("ANTHROPIC_API_KEY"),
-		ClaudeModel:     getEnvOrDefault("CLAUDE_MODEL", "claude-sonnet-4-20250514"),
+		ClaudeModel:     getEnvOrDefault("CLAUDE_MODEL", DefaultClaudeModel),
 
 		// Claude via Vertex AI
 		VertexProjectID: os.Getenv("ANTHROPIC_VERTEX_PROJECT_ID"),
-		VertexRegion:    getEnvOrDefault("CLOUD_ML_REGION", "us-central1"),
+		VertexRegion:    getEnvOrDefault("CLOUD_ML_REGION", DefaultCloudMLRegion),
 	}
 
 	return cfg, nil
 }
 
-// GitHubRepoList parses comma-separated GitHub repos
+// GitHubRepoList parses comma-separated GitHub repos and validates them
 func (c *Config) GitHubRepoList() []string {
 	if c.GitHubRepo == "" {
 		return []string{}
 	}
 	var repos []string
+	repoNamePattern := regexp.MustCompile(`^[a-zA-Z0-9._-]+$`)
 	for _, repo := range strings.Split(c.GitHubRepo, ",") {
 		if trimmed := strings.TrimSpace(repo); trimmed != "" {
-			repos = append(repos, trimmed)
+			// Validate repo name format to prevent injection
+			if repoNamePattern.MatchString(trimmed) {
+				repos = append(repos, trimmed)
+			}
 		}
 	}
 	return repos
